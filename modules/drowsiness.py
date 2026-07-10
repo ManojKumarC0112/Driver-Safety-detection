@@ -160,17 +160,25 @@ class DrowsinessDetector:
             print("\a")
             return
 
-        duration = time.time() - self.alarm_start_time
+        now = time.time()
+        # Ensure we only trigger a beep cycle every ~1 second so threads don't stack up
+        if now - getattr(self, 'last_beep_time', 0.0) < 1.0:
+            return
+        self.last_beep_time = now
+
+        duration = now - self.alarm_start_time
 
         if duration < 3:
             beep_args = (2000, 300)
+            reps = 1
         elif duration < 6:
             beep_args = (2400, 200)
+            reps = 2
         else:
             beep_args = (2800, 150)
+            reps = 3
 
         def _beep():
-            reps = 1 if duration < 3 else (2 if duration < 6 else 3)
             for _ in range(reps):
                 winsound.Beep(*beep_args)
 
@@ -402,8 +410,15 @@ class DrowsinessDetector:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 165, 255), 2)
 
             if status == "DROWSY":
+                # Flash the screen red until eyes open
+                flash_on = int(time.time() * 8) % 2 == 0
+                if flash_on:
+                    overlay = frame.copy()
+                    cv2.rectangle(overlay, (0, 0), (w, h), (0, 0, 255), -1)
+                    cv2.addWeighted(overlay, 0.4, frame, 0.6, 0, frame)
+
                 cv2.putText(frame, "DROWSINESS ALERT!", (20, 260),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
 
         else:
             # Face lost — reset counters instead of freezing last state
@@ -459,7 +474,10 @@ class DrowsinessDetector:
 
         # video_path may be a file path (str) or a webcam index (int),
         # e.g. config.DROWSINESS_VIDEO = 1
-        cap = cv2.VideoCapture(video_path)
+        if isinstance(video_path, int) and hasattr(cv2, 'CAP_DSHOW') and WINDOWS:
+            cap = cv2.VideoCapture(video_path, cv2.CAP_DSHOW)
+        else:
+            cap = cv2.VideoCapture(video_path)
 
         if isinstance(video_path, int):
             from config import FRAME_WIDTH, FRAME_HEIGHT

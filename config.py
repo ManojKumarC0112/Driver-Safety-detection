@@ -33,7 +33,7 @@ TRAFFIC_VIDEO = os.path.join(
     "traffic.mp4"
 )
 
-DROWSINESS_VIDEO = 1
+DROWSINESS_VIDEO = 0
 
 # Bundled sample clip for the Gradio "Use bundled sample video" option —
 # kept separate from DROWSINESS_VIDEO, which is a live webcam index and

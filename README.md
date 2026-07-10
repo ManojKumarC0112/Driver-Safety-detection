@@ -1,6 +1,14 @@
 # 🚗 Driver Drowsiness Detection System
 
-An AI-powered real-time Driver Drowsiness Detection System built using **Python**, **OpenCV**, **MediaPipe FaceMesh**, and **Gradio**. The system continuously monitors the driver's eyes and mouth to detect blinks, yawns, and prolonged eye closure, issuing alerts when drowsiness is detected.
+> **Note:** This project was specifically developed and submitted as part of a comprehensive **Artificial Intelligence (AI), Machine Learning (ML), and Deep Learning (DL) Training Program**. It demonstrates the real-world application of advanced computer vision pipelines, live deep-learning inference, and mathematical heuristics for robust video analysis.
+
+An AI-powered real-time Driver Drowsiness Detection System built using **Python**, **OpenCV**, **MediaPipe FaceMesh**, and **Gradio**. 
+
+## 📊 Core AI/ML Logic & Metrics
+The foundation of this detection system relies on real-time spatial calculations derived from a deep-learning-based 468-point 3D facial mesh:
+- **Eye Aspect Ratio (EAR):** Computes the Euclidean distance between precise horizontal and vertical eye landmarks to detect micro-sleeps, blinks, and prolonged eye closure (the primary fatigue indicator).
+- **Mouth Aspect Ratio (MAR):** Analyzes the normalized, scale-invariant spatial distance of the driver's lips to algorithmically detect yawning (an early predictive drowsiness indicator).
+- **Temporal Debouncing & State Buffering:** Employs temporal cooldown loops and moving frame-buffers (e.g. `MIN_BLINK_FRAMES`, `MIN_YAWN_FRAMES`) to significantly reduce false positive rates (FPR) and ensure high-accuracy ML alerting.
 
 ---
 
