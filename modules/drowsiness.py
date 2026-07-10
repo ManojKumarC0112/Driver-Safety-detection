@@ -6,6 +6,7 @@ import threading
 import cv2
 import mediapipe as mp
 from scipy.spatial import distance
+from fer.fer import FER
 
 try:
     import winsound
@@ -64,6 +65,16 @@ class DrowsinessDetector:
         )
 
         # -----------------------------
+        # Deep Learning Emotion Model
+        # -----------------------------
+        self.emotion_detector = FER(mtcnn=False)
+        self.emotion = "neutral"
+        self.stress_score = 0.0
+        self.emotion_thread = None
+        self.emotion_lock = threading.Lock()
+        self.current_frame = None
+
+        # -----------------------------
         # Counters
         # -----------------------------
 
@@ -72,6 +83,7 @@ class DrowsinessDetector:
         self.yawn_count = 0
         self.prev_eye_closed = False
         self.prev_yawn = False
+        self.eyes_closed_start_time = 0.0
 
         self.yawn_counter = 0
         self.last_blink_time = 0.0
@@ -155,34 +167,28 @@ class DrowsinessDetector:
     # ---------------------------------
 
     def play_alarm(self):
-
-        if not WINDOWS:
-            print("\a")
-            return
-
         now = time.time()
-        # Ensure we only trigger a beep cycle every ~1 second so threads don't stack up
-        if now - getattr(self, 'last_beep_time', 0.0) < 1.0:
+        # Cooldown of 4 seconds so the voice finishes speaking before triggering again
+        if now - getattr(self, 'last_beep_time', 0.0) < 4.0:
             return
         self.last_beep_time = now
 
-        duration = now - self.alarm_start_time
+        def _speak():
+            try:
+                import pyttsx3
+                engine = pyttsx3.init()
+                # Set a slightly faster text-to-speech rate for urgency
+                rate = engine.getProperty('rate')
+                engine.setProperty('rate', rate + 30)
+                engine.say("WARNING! DRIVER DROWSINESS DETECTED. PLEASE PULL OVER IMMEDIATELY.")
+                engine.runAndWait()
+            except Exception:
+                if WINDOWS:
+                    import winsound
+                    winsound.Beep(2500, 500)
+                    winsound.Beep(2500, 500)
 
-        if duration < 3:
-            beep_args = (2000, 300)
-            reps = 1
-        elif duration < 6:
-            beep_args = (2400, 200)
-            reps = 2
-        else:
-            beep_args = (2800, 150)
-            reps = 3
-
-        def _beep():
-            for _ in range(reps):
-                winsound.Beep(*beep_args)
-
-        threading.Thread(target=_beep, daemon=True).start()
+        threading.Thread(target=_speak, daemon=True).start()
 
     # ---------------------------------
     # Get Eye Points
@@ -221,6 +227,8 @@ class DrowsinessDetector:
 
     def detect_blink(self, ear):
         if ear < EAR_THRESHOLD:
+            if self.eye_counter == 0:
+                self.eyes_closed_start_time = time.time()
             self.eye_counter += 1
             self.prev_eye_closed = True
         else:
@@ -230,6 +238,7 @@ class DrowsinessDetector:
                     self.blink_count += 1
                     self.last_blink_time = now
             self.eye_counter = 0
+            self.eyes_closed_start_time = 0.0
             self.prev_eye_closed = False
 
     # ---------------------------------
@@ -254,7 +263,10 @@ class DrowsinessDetector:
     # ---------------------------------
 
     def driver_status(self):
-        if self.eye_counter >= CLOSED_EYES_FRAMES:
+        time_closed = time.time() - self.eyes_closed_start_time if self.eye_counter > 0 else 0
+        import config
+        # Trigger if frames hit limit OR 0.8 seconds elapsed (avoids FPS starvation bugs)
+        if self.eye_counter >= config.CLOSED_EYES_FRAMES or time_closed > 0.8:
             return "DROWSY"
         return "NORMAL"
 
@@ -263,7 +275,9 @@ class DrowsinessDetector:
     # ---------------------------------
 
     def check_alarm(self, frame):
-        if self.eye_counter >= CLOSED_EYES_FRAMES:
+        time_closed = time.time() - self.eyes_closed_start_time if self.eye_counter > 0 else 0
+        import config
+        if self.eye_counter >= config.CLOSED_EYES_FRAMES or time_closed > 0.8:
             if not self.alarm_on:
                 self.alarm_on = True
                 self.alarm_start_time = time.time()
@@ -280,6 +294,27 @@ class DrowsinessDetector:
             self.alarm_on = False
 
     # ---------------------------------
+    # Emotion DL Thread
+    # ---------------------------------
+
+    def _run_emotion_inference(self):
+        if self.current_frame is None:
+            return
+        
+        # Inference takes some CPU, running in background allows UI to stay 30fps
+        emotion_name, score = self.emotion_detector.top_emotion(self.current_frame)
+        
+        with self.emotion_lock:
+            if emotion_name:
+                self.emotion = emotion_name
+                if emotion_name in ["angry", "sad", "fear", "disgust"]:
+                    self.stress_score = min(1.0, self.stress_score + 0.1)
+                elif emotion_name == "happy":
+                    self.stress_score = max(0.0, self.stress_score - 0.2)
+                else:
+                    self.stress_score = max(0.0, self.stress_score - 0.05)
+
+    # ---------------------------------
     # Reset state when face is lost
     # ---------------------------------
 
@@ -290,6 +325,8 @@ class DrowsinessDetector:
         self.alarm_on = False
         self.prev_eye_closed = False
         self.prev_yawn = False
+        self.emotion = "neutral"
+        self.stress_score = 0.0
 
     # ---------------------------------
     # Detect Drowsiness (single frame)
@@ -335,12 +372,24 @@ class DrowsinessDetector:
             mar = self.mouth_ratio(upper, lower, m_left, m_right)
 
             # -----------------------------
-            # Blink / Yawn / Alarm (alarm needs the frame for screenshots)
+            # Blink            # Alarm (alarm needs the frame for screenshots)
             # -----------------------------
 
             self.detect_blink(ear)
             self.detect_yawn(mar)
             self.check_alarm(frame)
+
+            # -----------------------------
+            # DL Emotion & Stress Evaluator (Background Thread)
+            # -----------------------------
+            if self.total_frames % 5 == 0:
+                with self.emotion_lock:
+                    is_alive = self.emotion_thread is not None and self.emotion_thread.is_alive()
+                
+                if not is_alive:
+                    self.current_frame = frame.copy()
+                    self.emotion_thread = threading.Thread(target=self._run_emotion_inference, daemon=True)
+                    self.emotion_thread.start()
 
             status = self.driver_status()
 
@@ -409,6 +458,11 @@ class DrowsinessDetector:
             cv2.putText(frame, mouth_status, (20, 220),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 165, 255), 2)
 
+            cv2.putText(frame, f"Emotion: {self.emotion.capitalize()}", (20, 250),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 105, 180), 2)
+            cv2.putText(frame, f"Stress : {self.stress_score:.1f}", (20, 280),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255) if self.stress_score > 0.5 else (0, 255, 0), 2)
+
             if status == "DROWSY":
                 # Flash the screen red until eyes open
                 flash_on = int(time.time() * 8) % 2 == 0
@@ -417,7 +471,8 @@ class DrowsinessDetector:
                     cv2.rectangle(overlay, (0, 0), (w, h), (0, 0, 255), -1)
                     cv2.addWeighted(overlay, 0.4, frame, 0.6, 0, frame)
 
-                cv2.putText(frame, "DROWSINESS ALERT!", (20, 260),
+                # Centered alert to avoid overlapping left-panel metrics
+                cv2.putText(frame, "DROWSINESS ALERT!", (max(10, w//2 - 180), 80),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
 
         else:

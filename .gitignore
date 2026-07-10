@@ -1,0 +1,29 @@
+# Python Virtual Environments
+venv/
+env/
+.env/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# Output Directory (Generated dynamically by config.py)
+output/
+
+# Logs and Debug files
+*.log
+pip_error.log
+final_error*.log
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# macOS / OS X
+.DS_Store
+
+# IDE and Editor directories
+.vscode/
+.idea/
+*.swp

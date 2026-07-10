@@ -9,3 +9,6 @@ Pillow>=10.4.0
 pandas>=2.2.2
 matplotlib>=3.9.0
 tqdm>=4.66.4
+pyttsx3>=2.90
+fer>=22.0.0
+tensorflow>=2.13.0
