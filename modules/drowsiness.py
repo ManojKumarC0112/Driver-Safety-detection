@@ -31,7 +31,7 @@ from config import (
 # number of frames, and enforce a cooldown so the same event can't be
 # counted twice.
 
-MIN_BLINK_FRAMES = 2       # eyes must stay "closed" this many frames
+MIN_BLINK_FRAMES = 4       # eyes must stay "closed" this many frames
 BLINK_COOLDOWN = 0.3       # seconds between counted blinks
 
 MIN_YAWN_FRAMES = 8        # mouth must stay "open" this many frames
@@ -83,7 +83,7 @@ class DrowsinessDetector:
         self.yawn_count = 0
         self.prev_eye_closed = False
         self.prev_yawn = False
-        self.eyes_closed_start_time = 0.0
+        self.smoothed_ear = None
 
         self.yawn_counter = 0
         self.last_blink_time = 0.0
@@ -226,9 +226,13 @@ class DrowsinessDetector:
     # ---------------------------------
 
     def detect_blink(self, ear):
-        if ear < EAR_THRESHOLD:
-            if self.eye_counter == 0:
-                self.eyes_closed_start_time = time.time()
+        # Apply exponential smoothing to reduce jitter that resets the counter
+        if self.smoothed_ear is None:
+            self.smoothed_ear = ear
+        else:
+            self.smoothed_ear = self.smoothed_ear * 0.6 + ear * 0.4
+            
+        if self.smoothed_ear < EAR_THRESHOLD:
             self.eye_counter += 1
             self.prev_eye_closed = True
         else:
@@ -238,7 +242,6 @@ class DrowsinessDetector:
                     self.blink_count += 1
                     self.last_blink_time = now
             self.eye_counter = 0
-            self.eyes_closed_start_time = 0.0
             self.prev_eye_closed = False
 
     # ---------------------------------
@@ -263,10 +266,8 @@ class DrowsinessDetector:
     # ---------------------------------
 
     def driver_status(self):
-        time_closed = time.time() - self.eyes_closed_start_time if self.eye_counter > 0 else 0
         import config
-        # Trigger if frames hit limit OR 0.8 seconds elapsed (avoids FPS starvation bugs)
-        if self.eye_counter >= config.CLOSED_EYES_FRAMES or time_closed > 0.8:
+        if self.eye_counter >= config.CLOSED_EYES_FRAMES:
             return "DROWSY"
         return "NORMAL"
 
@@ -275,9 +276,8 @@ class DrowsinessDetector:
     # ---------------------------------
 
     def check_alarm(self, frame):
-        time_closed = time.time() - self.eyes_closed_start_time if self.eye_counter > 0 else 0
         import config
-        if self.eye_counter >= config.CLOSED_EYES_FRAMES or time_closed > 0.8:
+        if self.eye_counter >= config.CLOSED_EYES_FRAMES:
             if not self.alarm_on:
                 self.alarm_on = True
                 self.alarm_start_time = time.time()
@@ -333,6 +333,8 @@ class DrowsinessDetector:
     # ---------------------------------
 
     def detect(self, frame):
+        # Flip frame horizontally to un-mirror video feed
+        frame = cv2.flip(frame, 1)
 
         h, w, _ = frame.shape
 
@@ -546,8 +548,8 @@ class DrowsinessDetector:
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-        writer = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
+        # Video saving disabled to conserve storage space
+        writer = None
 
         # A live camera has no natural end-of-stream, and without a
         # preview window there's no 'q' key to stop it either — so cap
@@ -575,7 +577,8 @@ class DrowsinessDetector:
 
                 self.total_frames += 1
                 frame = self.detect(frame)
-                writer.write(frame)
+                if writer:
+                    writer.write(frame)
 
                 if show_preview:
                     cv2.imshow(window_name, frame)
@@ -599,7 +602,8 @@ class DrowsinessDetector:
                     break
         finally:
             cap.release()
-            writer.release()
+            if writer:
+                writer.release()
             if show_preview:
                 cv2.destroyAllWindows()
 
