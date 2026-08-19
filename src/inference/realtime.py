@@ -166,6 +166,10 @@ def run_realtime_application(
 
     print("Controls: 'q'=Quit, 'm'=Toggle Mesh, 'a'=Toggle 3D Axes, 'g'=Toggle EAR Graph, 'p'=Toggle Probabilities\n")
 
+    window_name = "Driver Safety AI - Real-Time Vigilance Detection"
+    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+    cv2.setWindowProperty(window_name, cv2.WND_PROP_TOPMOST, 1)
+
     try:
         while cap.isOpened():
             loop_start = time.time()
@@ -341,7 +345,7 @@ def run_realtime_application(
 
             # Render optional Probability Bars
             if show_probabilities:
-                frame = draw_probability_bars(frame, probs, class_names)
+                frame = draw_probability_bars(frame, probs, class_names, top_left=(img_w - 250, 94))
 
             # Render optional EAR Graph
             if show_ear_graph:
@@ -379,7 +383,7 @@ def run_realtime_application(
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.85, (255, 255, 255), 2, cv2.LINE_AA)
 
             # Show Frame
-            cv2.imshow("Driver Safety AI - Real-Time Vigilance Detection", frame)
+            cv2.imshow(window_name, frame)
 
             # Key Controls
             key = cv2.waitKey(1) & 0xFF
