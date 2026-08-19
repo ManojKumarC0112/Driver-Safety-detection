@@ -114,8 +114,8 @@ alarm:
   strobe_frequency_hz: 6.0    # Hz (strobe flash rate)
 
 ui:
-  show_mesh: true
-  show_3d_axes: true
+  show_mesh: false
+  show_3d_axes: false
   show_ear_graph: true
   show_probabilities: true
   ear_graph_history_len: 100
