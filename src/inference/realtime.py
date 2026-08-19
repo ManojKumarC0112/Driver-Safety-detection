@@ -150,6 +150,7 @@ def run_realtime_application(
     show_3d_axes = config["ui"]["show_3d_axes"]
     show_ear_graph = config["ui"]["show_ear_graph"]
     show_probabilities = config["ui"]["show_probabilities"]
+    show_event_timeline = config["drowsiness"].get("enable_event_timeline", False)
 
     # Open Camera
     cap = cv2.VideoCapture(config["camera"]["index"])
@@ -164,7 +165,7 @@ def run_realtime_application(
     start_time = time.time()
     last_alarm_time = 0.0
 
-    print("Controls: 'q'=Quit, 'm'=Toggle Mesh, 'a'=Toggle 3D Axes, 'g'=Toggle EAR Graph, 'p'=Toggle Probabilities\n")
+    print("Controls: 'q'=Quit, 'm'=Toggle Mesh, 'a'=Toggle 3D Axes, 'g'=Toggle EAR Graph, 'p'=Toggle Probabilities, 'e'=Toggle Timeline\n")
 
     window_name = "Driver Safety AI - Real-Time Vigilance Detection"
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
@@ -331,6 +332,10 @@ def run_realtime_application(
             )
 
             # 4. Render OpenCV HUD
+            decision_ui = decision_info.copy() if decision_info else {}
+            if not show_event_timeline:
+                decision_ui["event_timeline"] = []
+
             frame = draw_hud(
                 frame=frame,
                 status_text=status_text,
@@ -340,7 +345,7 @@ def run_realtime_application(
                 fps=current_fps,
                 device_name=device_name,
                 warmup_counter=(current_seq_len, window_size) if current_seq_len < window_size else None,
-                decision_info=decision_info
+                decision_info=decision_ui
             )
 
             # Render optional Probability Bars
@@ -402,6 +407,9 @@ def run_realtime_application(
             elif key == ord('p'):
                 show_probabilities = not show_probabilities
                 print(f"[UI] Probability Bars toggled: {show_probabilities}")
+            elif key == ord('e'):
+                show_event_timeline = not show_event_timeline
+                print(f"[UI] Event Timeline toggled: {show_event_timeline}")
 
     finally:
         cap.release()
