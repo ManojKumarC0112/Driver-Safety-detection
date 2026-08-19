@@ -142,7 +142,7 @@ class VoiceAlertEngine:
 
                 if sapi_voice is not None:
                     try:
-                        sapi_voice.Speak(message_text)
+                        sapi_voice.Speak(message_text, 1)  # 1 = SVSFlagsAsync
                     except Exception as e:
                         logger.error(f"[SAPI AUDIO ERROR] Native SAPI playback failed: {e}")
                         sapi_voice = None
