@@ -1,0 +1,93 @@
+# Central Configuration for Proposed 12-Feature Telemetry Experiment (Experiment 2)
+project:
+  name: "Driver Safety AI - Proposed 12-Feature Telemetry"
+  version: "2.0.0"
+  owner: "Manoj Kumar C"
+
+classes:
+  num_classes: 2
+  names:
+    - "ALERT"
+    - "DROWSY"
+  id_to_name:
+    0: "ALERT"
+    1: "DROWSY"
+  name_to_id:
+    "ALERT": 0
+    "DROWSY": 1
+
+auxiliary_rules:
+  yawning:
+    enabled: true
+    mar_threshold: 0.55
+    min_frames: 15
+  distraction:
+    enabled: true
+    yaw_threshold: 25.0
+    pitch_threshold: 20.0
+    min_frames: 15
+
+features:
+  num_features: 12
+  window_size: 30
+  sequence_stride: 1
+  names:
+    - "EAR_LEFT"
+    - "EAR_RIGHT"
+    - "MEAN_EAR"
+    - "MAR"
+    - "YAW"
+    - "PITCH"
+    - "ROLL"
+    - "PERCLOS"
+    - "BLINK_RATE"
+    - "EYE_CLOSURE_DURATION"
+    - "MOUTH_OPEN_DURATION"
+    - "HEAD_MOTION_MAGNITUDE"
+
+model:
+  in_channels: 12
+  cnn_filters: 32
+  kernel_size: 3
+  lstm_hidden_size: 64
+  lstm_num_layers: 2
+  lstm_bidirectional: true
+  dropout: 0.3
+  num_classes: 2
+
+collection:
+  countdown_seconds: 3
+  session_duration_seconds: 30
+  fps: 30
+  require_participant_id: true
+  require_session_id: true
+  require_label: true
+  allowed_labels:
+    - "ALERT"
+    - "DROWSY"
+  store_raw_video: false # Telemetry features only
+  output_dir: "data/raw/proposed_telemetry"
+
+validation:
+  min_participants: 3
+  min_sequence_length: 30
+  max_nan_inf_ratio: 0.0
+  valid_ear_range: [0.0, 1.0]
+  valid_mar_range: [0.0, 2.0]
+  valid_head_angle_range: [-180.0, 180.0]
+
+drowsiness:
+  probability_threshold: 0.70
+  recovery_probability_threshold: 0.45
+  confirmation_duration_sec: 0.8
+  recovery_duration_sec: 0.8
+  minimum_closure_duration_sec: 0.8
+  response_window_sec: 2.5
+  escalation_delay_sec: 4.0
+  voice_cooldown_sec: 6.0
+  post_recovery_cooldown_sec: 3.0
+  blink_max_duration_seconds: 0.35
+  enable_voice: true
+  enable_fallback_alarm: true
+  enable_event_timeline: true
+

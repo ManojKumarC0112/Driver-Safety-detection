@@ -1,145 +1,135 @@
-# 🚗 Driver Safety AI: Hybrid 1D-CNN + Bi-LSTM Deep Learning System
+# Driver Safety AI 🚗🛡️
 
-> **Academic Project:** Driver Drowsiness and Vigilance Detection using Hybrid Neural Networks and 3D Facial Mesh Telemetry  
-> **Author:** Manoj Kumar  
-> **Degree:** Bachelor of Technology in Computer Science & Engineering (2025–2026)  
+**Real-Time Driver Drowsiness and Vigilance Detection Using MediaPipe, 1D-CNN and Bi-LSTM**
 
----
-
-## 📌 Executive Summary
-
-Driver fatigue and micro-sleeps are primary contributors to fatal vehicular collisions worldwide. Traditional computer vision monitoring relies strictly on static spatial heuristics (such as static Eye Aspect Ratio thresholds), which suffer high false-positive rates due to momentary glances and natural facial variations.
-
-This project introduces a **Hybrid Deep Learning Architecture** combining a **1D Spatial Convolutional Neural Network (1D-CNN)** with a **2-Layer Bidirectional Long Short-Term Memory (Bi-LSTM)** network. Fused with **MediaPipe 468-point 3D Facial Mesh Telemetry**, the engine achieves **96.4% classification accuracy** at 35+ FPS on standard CPU hardware with zero output video storage overhead.
+**Author**: Manoj Kumar C  
+**Degree**: B.Tech Computer Science and Engineering  
+**Institution**: Academic Deep Learning & Computer Vision Project  
 
 ---
 
-## 🔬 Core Academic Innovations
+## 🌟 Project Overview
+**Driver Safety AI** is a real-time computer vision and deep learning system engineered to monitor driver fatigue, micro-sleep, yawning, and distraction using a standard webcam. 
 
-Unlike generic detection scripts, this system features 5 original research-level innovations implemented directly inside the zero-latency native OpenCV engine:
-
-1. **3D Head Pose Cartesian Coordinate System Axis Projection (`cv2.projectPoints`):**  
-   Projects 3D RGB Cartesian axes (X-Red Yaw, Y-Green Pitch, Z-Blue Roll) from the driver's nose tip, proving rigid 3D spatial transformation matrix ($R, t$) calculations via Perspective-n-Point (`solvePnP`).
-2. **Real-Time PyTorch Softmax Probability Bar Chart:**  
-   Renders dynamic horizontal probability distribution gauges for `ALERT`, `DROWSY`, `YAWNING`, and `DISTRACTED` directly on the OpenCV HUD.
-3. **EAR Fatigue Oscilloscope Waveform Sparkline Graph:**  
-   Displays a rolling 100-frame sparkline curve tracking the driver's Eye Aspect Ratio (EAR) against a critical threshold line ($0.21$).
-4. **Fused Driver Vigilance Index (DVI - 0 to 100% Risk Score):**  
-   Implements a novel fused biometric risk score equation combining deep neural network confidence, PERCLOS rolling ratio, consecutive closure frames, and head yaw deviation:
-   $$DVI = 40\% \cdot (1 - P_{\text{ALERT}}) + 30\% \cdot \text{PERCLOS} + 20\% \cdot \text{ConsecClosed} + 10\% \cdot \text{YawAngle}$$
-5. **Zero-Storage High-FPS Native Display:**  
-   Processes webcam frames strictly in-memory for zero video disk storage consumption while generating audit-ready PDF/CSV reports upon session exit (`q`).
+Unlike simple static threshold systems, Driver Safety AI employs a temporal architecture:
+1. **MediaPipe Facial Landmark Engine**: Extracts 468 3D facial landmarks on CPU.
+2. **Temporal Feature Extractor**: Computes 12 frame-level and rolling temporal metrics (EAR, MAR, Head Pose, PERCLOS, Blink Rate, Durations, Motion).
+3. **Sliding Window Sequence Queue**: Assembles 30 consecutive temporal frames $(30 \times 12)$.
+4. **Hybrid Deep Learning Model**: Combines a **1D CNN** for temporal feature representation with a **2-Layer Bidirectional LSTM** for long-range sequence classification.
+5. **Temporal Safety State Manager**: Resolves noisy ML predictions into a stable 5-stage state machine (`ALERT`, `SUSPECTED`, `CONFIRMED`, `PERSISTENT`, `RECOVERING`) using real-world timing hysteresis, response monitoring, and blink protection ($\le 0.35$s).
+6. **Multi-Stage Voice Intervention Engine**: Provides graded, non-blocking voice audio warnings (Levels 1 to 3) using a 100% reliable native Windows SAPI COM implementation (`SAPI.SpVoice`).
+7. **Real-time HUD & DVI Engine**: Computes a Driver Vigilance Index (DVI), presents Softmax probability bars, EAR sparkline graph, optional 3D head coordinate axes, and triggers a strong red strobe flash effect on critical drowsiness.
 
 ---
 
-## 🧠 Neural Network Topology
+## 🏗️ Architecture Pipeline
 
-```
-┌────────────────────────────────────────────────────────┐
-│  Input Video Feed (Webcam / Native Frame Stream)      │
-└──────────────────────────┬─────────────────────────────┘
-                           │
-┌──────────────────────────▼─────────────────────────────┐
-│  MediaPipe 468-Point 3D Facial Landmark Extraction     │
-└──────────────────────────┬─────────────────────────────┘
-                           │
-┌──────────────────────────▼─────────────────────────────┐
-│  12-Dimensional Spatial-Temporal Vector Construction   │
-│  (EAR_L, EAR_R, MAR, Yaw, Pitch, Roll, PERCLOS, etc.)  │
-└──────────────────────────┬─────────────────────────────┘
-                           │ (30-Frame Sequence Window)
-┌──────────────────────────▼─────────────────────────────┐
-│  1D Spatial CNN Layer (32 Filters, Kernel=3, ReLU)     │
-└──────────────────────────┬─────────────────────────────┘
-                           │
-┌──────────────────────────▼─────────────────────────────┐
-│  2-Layer Bidirectional LSTM (Bi-LSTM, 64 Hidden Units) │
-└──────────────────────────┬─────────────────────────────┘
-                           │
-┌──────────────────────────▼─────────────────────────────┐
-│  Dense Classifier Head (Dropout=0.3, Softmax Output)   │
-└──────────────────────────┬─────────────────────────────┘
-                           │
-┌──────────────────────────▼─────────────────────────────┐
-│  Output States: ALERT | DROWSY | YAWNING | DISTRACTED │
-└────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    A[Webcam Stream 640x480] --> B[MediaPipe Face Mesh]
+    B --> C[12-Feature Temporal Extractor]
+    C --> D[30-Frame Sequence Queue 30x12]
+    D --> E[StandardScaler Normalization]
+    E --> F[1D CNN Layer]
+    F --> G[2-Layer Bi-LSTM]
+    G --> H[Dense Classifier]
+    H --> I[Softmax Inference Probabilities]
+    I --> J{Driver State}
+    J -->|0: ALERT| K[HUD Display]
+    J -->|1: DROWSY| L[Audio + Visual Warning]
+    J -->|2: YAWNING| K
+    J -->|3: DISTRACTED| M[Head Deviation Alert]
+    K --> N[DVI Risk Engine 0-100]
+    N --> O[Telemetry Logger & PDF Report]
 ```
 
 ---
 
-## 📂 Project Directory Structure
-
-```text
-Driver-Drowsiness-Detection-DL/
-│
-├── models/
-│   └── drowsiness_bilstm.pt        # Trained PyTorch Model Weights
-│
-├── modules/
-│   ├── dl_model.py                 # PyTorch 1D-CNN + Bi-LSTM Neural Network
-│   ├── drowsiness.py               # Biometric Landmark + DL Inference Engine
-│   ├── logger.py                   # CSV Telemetry Recorder
-│   ├── pdf_report.py               # Academic Audit PDF Generator
-│   └── utils.py                    # 3D Axes, Softmax Gauges & Sparkline Overlay
-│
-├── notebooks/
-│   └── train_drowsiness_dl.ipynb   # Model Training Notebook with Loss/Accuracy Curves
-│
-├── output/
-│   ├── csv/                        # Session Telemetry CSV Logs
-│   ├── reports/                    # Generated PDF Safety Audit Reports
-│   └── screenshots/                # Incident Event Evidence Screenshots
-│
-├── generate_academic_report.py    # Generator for 30-Page Academic Project Report
-├── main.py                         # Native High-FPS OpenCV Desktop Application
-├── config.py                       # System Hyperparameters & Configurations
-├── requirements.txt                # Dependency Specification
-└── README.md                       # Project Documentation
-```
+## 📊 Target Classes
+1. `ALERT` (0): Normal attentive driving posture and eye state.
+2. `DROWSY` (1): Prolonged eye closure, micro-sleep, high PERCLOS score.
+3. `YAWNING` (2): Extended mouth opening dynamics.
+4. `DISTRACTED` (3): Sustained head deviation away from forward driving direction (Yaw > 25° / Pitch > 20°).
 
 ---
 
-## ⚙️ Installation & Execution
+## 🛠️ Installation & Setup
 
-### 1. Environment Setup
-```bash
-# Navigate to the project root directory
-cd Driver-Drowsiness-Detection-DL
-
-# Activate the virtual environment
-..\Driver-Drowsiness-Detection-System\venv\Scripts\activate
+### 1. Create Virtual Environment
+```cmd
+python -m venv .venv
+.venv\Scripts\activate
 ```
 
 ### 2. Install Dependencies
-```bash
+```cmd
 pip install -r requirements.txt
 ```
 
-### 3. Run Native High-FPS OpenCV Engine (Recommended)
-```bash
+---
+
+## 🚀 Usage Commands
+
+### 1. Run Real-Time Webcam Monitoring Application
+```cmd
 python main.py
 ```
-- Press **`q`** to close the camera window, save session CSV telemetry, and auto-compile your academic **PDF Safety Audit Report**.
 
-### 4. Generate 30-Page University Academic Report PDF
-```bash
-python generate_academic_report.py
+### 2. Collect Live Driver Telemetry Feature Data
+```cmd
+# Record ALERT driving telemetry
+python src/data/collect_data.py --label ALERT --subject_id subject_01
+
+# Record DROWSY driver telemetry
+python src/data/collect_data.py --label DROWSY --subject_id subject_01
+
+# Record YAWNING driver telemetry
+python src/data/collect_data.py --label YAWNING --subject_id subject_01
+
+# Record DISTRACTED driver telemetry
+python src/data/collect_data.py --label DISTRACTED --subject_id subject_01
 ```
-Outputs: `Academic_Project_Report_Driver_Drowsiness_DL.pdf`
+
+### 3. Train Model
+```cmd
+python -m src.training.train
+```
+
+### 4. Evaluate Model on Test Set
+```cmd
+python -m src.training.evaluate
+```
+
+### 5. Run Automated Unit & Integration Tests
+```cmd
+pytest
+```
 
 ---
 
-## 📊 Experimental Results & Benchmarks
+## 🎮 Keyboard Controls in Real-Time App
 
-| Driver State | Precision | Recall | F1-Score | Evaluation Support |
-| :--- | :---: | :---: | :---: | :---: |
-| **ALERT** | 0.97 | 0.98 | 0.975 | 1,500 samples |
-| **DROWSY** | 0.96 | 0.95 | 0.955 | 1,200 samples |
-| **YAWNING** | 0.95 | 0.96 | 0.955 | 1,100 samples |
-| **DISTRACTED** | 0.98 | 0.96 | 0.970 | 1,200 samples |
-| **Overall Average** | **0.965** | **0.963** | **0.964** | **5,000 samples** |
+| Key | Action |
+|---|---|
+| `q` | Quit application and generate session summary CSV/JSON |
+| `m` | Toggle MediaPipe Face Mesh overlay |
+| `a` | Toggle 3D Head Coordinate Axes ($X$=Red, $Y$=Green, $Z$=Blue) |
+| `g` | Toggle Rolling EAR Oscilloscope Sparkline Graph |
+| `p` | Toggle Softmax Class Probability Bars |
 
 ---
 
-## 📄 License
-This project is licensed under the MIT License — Academic & Personal Use.
+## 📈 Driver Vigilance Index (DVI)
+The **Driver Vigilance Index (DVI)** is a project-defined 0–100 normalized risk score:
+$$\text{DVI} = 100 \times \left(0.40 \times (1 - P_{\text{ALERT}}) + 0.30 \times \text{PERCLOS} + 0.20 \times \text{NormEyeClosure} + 0.10 \times \text{NormYawDev}\right)$$
+
+### Risk Levels:
+- **0 – 25**: `LOW` Risk (Green)
+- **25 – 50**: `MODERATE` Risk (Yellow)
+- **50 – 75**: `HIGH` Risk (Orange)
+- **75 – 100**: `CRITICAL` Risk (Red - Triggers Audio Alarm)
+
+---
+
+## ⚠️ Academic & Safety Disclaimer
+> **IMPORTANT DISCLAIMER**: This project is an academic prototype designed for university coursework and research demonstration. It is NOT a certified automotive safety device and must not be relied upon as the sole mechanism for preventing driver fatigue or motor vehicle collisions. The Driver Vigilance Index (DVI) is a project-defined score and not a medically or automotive-certified metric.

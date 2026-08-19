@@ -1,0 +1,121 @@
+# Central Configuration for Driver Safety AI
+project:
+  name: "Driver Safety AI"
+  title: "Real-Time Driver Drowsiness and Vigilance Detection Using MediaPipe, 1D-CNN and Bi-LSTM"
+  owner: "Manoj Kumar C"
+  degree: "B.Tech Computer Science and Engineering"
+  version: "1.0.0"
+
+classes:
+  names:
+    - "ALERT"
+    - "DROWSY"
+    - "YAWNING"
+    - "DISTRACTED"
+  id_to_name:
+    0: "ALERT"
+    1: "DROWSY"
+    2: "YAWNING"
+    3: "DISTRACTED"
+
+camera:
+  index: 0
+  width: 640
+  height: 480
+  fps: 30
+
+mediapipe:
+  max_num_faces: 1
+  refine_landmarks: true
+  min_detection_confidence: 0.5
+  min_tracking_confidence: 0.5
+
+features:
+  window_size: 30
+  sequence_stride: 1
+  num_features: 12
+  names:
+    - "EAR_LEFT"
+    - "EAR_RIGHT"
+    - "MEAN_EAR"
+    - "MAR"
+    - "YAW"
+    - "PITCH"
+    - "ROLL"
+    - "PERCLOS"
+    - "BLINK_RATE"
+    - "EYE_CLOSURE_DURATION"
+    - "MOUTH_OPEN_DURATION"
+    - "HEAD_MOTION_MAGNITUDE"
+
+thresholds:
+  ear_threshold: 0.21
+  mar_threshold: 0.55
+  perclos_window_frames: 90  # 3 seconds at 30 fps
+  blink_min_closed_frames: 2
+  blink_cooldown_frames: 5
+  yawn_min_frames: 15        # 0.5 sec at 30 fps
+  distraction_yaw_threshold: 25.0   # degrees
+  distraction_pitch_threshold: 20.0 # degrees
+  distraction_min_frames: 15        # sustained sustained head deviation
+
+drowsiness:
+  probability_threshold: 0.70
+  recovery_probability_threshold: 0.45
+  confirmation_duration_sec: 0.8
+  recovery_duration_sec: 0.8
+  minimum_closure_duration_sec: 0.8
+  response_window_sec: 2.5
+  escalation_delay_sec: 4.0
+  voice_cooldown_sec: 6.0
+  post_recovery_cooldown_sec: 3.0
+  blink_max_duration_seconds: 0.35
+  enable_voice: true
+  enable_fallback_alarm: true
+  enable_event_timeline: true
+
+dvi:
+  weight_p_drowsy: 0.40      # weight for 1 - P_ALERT
+  weight_perclos: 0.30       # weight for PERCLOS
+  weight_eye_closure: 0.20   # weight for normalized eye closure duration
+  weight_yaw_dev: 0.10       # weight for normalized yaw deviation
+  max_eye_closure_sec: 3.0   # normalization upper bound
+  max_yaw_dev_deg: 45.0      # normalization upper bound
+  levels:
+    low: 25.0
+    moderate: 50.0
+    high: 75.0
+
+model:
+  in_channels: 12
+  cnn_filters: 32
+  kernel_size: 3
+  lstm_hidden_size: 64
+  lstm_num_layers: 2
+  lstm_bidirectional: true
+  dropout: 0.3
+  num_classes: 4
+  inference_smoothing_window: 5 # deque maxlen for probability smoothing
+
+training:
+  batch_size: 32
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  epochs: 50
+  early_stopping_patience: 10
+  seed: 42
+
+alarm:
+  sustained_drowsy_frames: 15 # ~0.5s sustained prediction before alarm
+  cooldown_seconds: 2.0
+  sound_frequency: 1000       # Hz (for winsound/beep)
+  sound_duration_ms: 500
+  enable_strobe_flash: true
+  strobe_frequency_hz: 6.0    # Hz (strobe flash rate)
+
+ui:
+  show_mesh: true
+  show_3d_axes: true
+  show_ear_graph: true
+  show_probabilities: true
+  ear_graph_history_len: 100

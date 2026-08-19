@@ -1,0 +1,151 @@
+{
+  "dataset_name": "Driver Safety AI - Proposed 12-Feature Telemetry",
+  "feature_count": 12,
+  "classes": [
+    "ALERT",
+    "DROWSY"
+  ],
+  "raw_files_count": 6,
+  "participants": [
+    "P001",
+    "P002",
+    "P003"
+  ],
+  "sessions": [
+    {
+      "participant_id": "P001",
+      "session_id": "S001",
+      "label": "ALERT",
+      "frames": 900
+    },
+    {
+      "participant_id": "P001",
+      "session_id": "S002",
+      "label": "DROWSY",
+      "frames": 900
+    },
+    {
+      "participant_id": "P002",
+      "session_id": "S001",
+      "label": "ALERT",
+      "frames": 900
+    },
+    {
+      "participant_id": "P002",
+      "session_id": "S002",
+      "label": "DROWSY",
+      "frames": 901
+    },
+    {
+      "participant_id": "P003",
+      "session_id": "S001",
+      "label": "ALERT",
+      "frames": 901
+    },
+    {
+      "participant_id": "P003",
+      "session_id": "S002",
+      "label": "DROWSY",
+      "frames": 900
+    }
+  ],
+  "total_frames": 5402,
+  "class_distribution": {
+    "ALERT": 2701,
+    "DROWSY": 2701
+  },
+  "feature_statistics": {
+    "EAR_LEFT": {
+      "min": 0.0156587790697813,
+      "max": 0.6220350861549377,
+      "mean": 0.3257258368034698,
+      "std": 0.1415956988220102
+    },
+    "EAR_RIGHT": {
+      "min": 0.0601106435060501,
+      "max": 1.010254144668579,
+      "mean": 0.32901114489095645,
+      "std": 0.12789179068708106
+    },
+    "MEAN_EAR": {
+      "min": 0.0508680418133735,
+      "max": 0.7130517959594727,
+      "mean": 0.32736849079790575,
+      "std": 0.1320623056074369
+    },
+    "MAR": {
+      "min": 0.1131663993000984,
+      "max": 1.0827834606170654,
+      "mean": 0.19339595671352833,
+      "std": 0.19537849357938622
+    },
+    "YAW": {
+      "min": -71.98001861572266,
+      "max": 66.81925964355469,
+      "mean": 4.8528936806089025,
+      "std": 11.84695324937166
+    },
+    "PITCH": {
+      "min": -45.6204948425293,
+      "max": 39.55585479736328,
+      "mean": 7.211851010468858,
+      "std": 9.405257105601512
+    },
+    "ROLL": {
+      "min": -179.99839782714844,
+      "max": 179.99769592285156,
+      "mean": -123.55398664230282,
+      "std": 123.21180823615072
+    },
+    "PERCLOS": {
+      "min": 0.0,
+      "max": 1.0,
+      "mean": 0.27333322466723137,
+      "std": 0.3507488614196917
+    },
+    "BLINK_RATE": {
+      "min": 0.0,
+      "max": 68.1795883178711,
+      "mean": 15.269170330436705,
+      "std": 17.839160744786263
+    },
+    "EYE_CLOSURE_DURATION": {
+      "min": 0.0,
+      "max": 7.599999904632568,
+      "mean": 0.4278970755269818,
+      "std": 1.1648476957248768
+    },
+    "MOUTH_OPEN_DURATION": {
+      "min": 0.0,
+      "max": 4.633333206176758,
+      "mean": 0.13402443543360637,
+      "std": 0.5607291923824014
+    },
+    "HEAD_MOTION_MAGNITUDE": {
+      "min": 0.0,
+      "max": 9625.48046875,
+      "mean": 120.6129610559447,
+      "std": 610.7637790690889
+    }
+  },
+  "nan_inf_count": 0,
+  "split_status": {
+    "train_participants": [
+      "P003"
+    ],
+    "validation_participants": [
+      "P001"
+    ],
+    "test_participants": [
+      "P002"
+    ],
+    "train_sequence_count": 1743,
+    "validation_sequence_count": 1742,
+    "test_sequence_count": 1743,
+    "feature_dimensions": [
+      30,
+      12
+    ],
+    "zero_leakage_verified": true
+  }
+}

@@ -1,0 +1,427 @@
+{
+  "provenance": {
+    "repository": "rezaghoddoosian/Early-Drowsiness-Detection",
+    "paper": "A Realistic Dataset and Baseline Temporal Model for Early Drowsiness Detection (CVPRW 2019)",
+    "authors": "Reza Ghoddoosian, Marnim Galib, Vassilis Athitsos",
+    "dataset": "UTA-RLDD (University of Texas at Arlington Real-Life Drowsiness Dataset)",
+    "license": "MIT License (as specified in repository LICENSE file)"
+  },
+  "feature_definitions": {
+    "0": "Normalized Blink Frequency (Freq)",
+    "1": "Normalized Blink Amplitude (Amp)",
+    "2": "Normalized Blink Duration (Dur)",
+    "3": "Normalized Eye Opening Velocity (Vel)"
+  },
+  "label_mapping": {
+    "0.0": "Alert (0)",
+    "5.0": "Low Vigilance / Semi-sleepy (5)",
+    "10.0": "Drowsy / Sleepy (10)"
+  },
+  "folds": {
+    "Fold1": {
+      "train_blinks": {
+        "shape": [
+          7379,
+          30,
+          4
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 7379,
+        "sequence_length": 30,
+        "num_features": 4,
+        "min_val": -108.51149920409902,
+        "max_val": 705.6404099328353,
+        "mean_val": 4.971678912492408,
+        "std_val": 24.572855057269976
+      },
+      "train_labels": {
+        "shape": [
+          7379,
+          1
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 7379,
+        "unique_labels": [
+          0.0,
+          5.0,
+          10.0
+        ],
+        "class_distribution": {
+          "0.0": 1419,
+          "5.0": 2994,
+          "10.0": 2966
+        },
+        "min_val": 0.0,
+        "max_val": 10.0
+      },
+      "test_blinks": {
+        "shape": [
+          1269,
+          30,
+          4
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 1269,
+        "sequence_length": 30,
+        "num_features": 4,
+        "min_val": -20.27553770336942,
+        "max_val": 508.31217331733114,
+        "mean_val": 5.469814556430335,
+        "std_val": 18.336631944062376
+      },
+      "test_labels": {
+        "shape": [
+          1269,
+          1
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 1269,
+        "unique_labels": [
+          0.0,
+          5.0,
+          10.0
+        ],
+        "class_distribution": {
+          "0.0": 228,
+          "5.0": 494,
+          "10.0": 547
+        },
+        "min_val": 0.0,
+        "max_val": 10.0
+      },
+      "sample_ratio": "Train: 7379, Test: 1269 (Total: 8648)"
+    },
+    "Fold2": {
+      "train_blinks": {
+        "shape": [
+          6605,
+          30,
+          4
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 6605,
+        "sequence_length": 30,
+        "num_features": 4,
+        "min_val": -82.62636482586785,
+        "max_val": 705.6404099328353,
+        "mean_val": 6.46283097719567,
+        "std_val": 25.857592401676747
+      },
+      "train_labels": {
+        "shape": [
+          6605,
+          1
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 6605,
+        "unique_labels": [
+          0.0,
+          5.0,
+          10.0
+        ],
+        "class_distribution": {
+          "0.0": 1182,
+          "5.0": 2653,
+          "10.0": 2770
+        },
+        "min_val": 0.0,
+        "max_val": 10.0
+      },
+      "test_blinks": {
+        "shape": [
+          2043,
+          30,
+          4
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 2043,
+        "sequence_length": 30,
+        "num_features": 4,
+        "min_val": -108.51149920409902,
+        "max_val": 146.7603999065317,
+        "mean_val": 0.46021280617434146,
+        "std_val": 14.168910645495673
+      },
+      "test_labels": {
+        "shape": [
+          2043,
+          1
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 2043,
+        "unique_labels": [
+          0.0,
+          5.0,
+          10.0
+        ],
+        "class_distribution": {
+          "0.0": 465,
+          "5.0": 835,
+          "10.0": 743
+        },
+        "min_val": 0.0,
+        "max_val": 10.0
+      },
+      "sample_ratio": "Train: 6605, Test: 2043 (Total: 8648)"
+    },
+    "Fold3": {
+      "train_blinks": {
+        "shape": [
+          6465,
+          30,
+          4
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 6465,
+        "sequence_length": 30,
+        "num_features": 4,
+        "min_val": -108.51149920409902,
+        "max_val": 705.6404099328353,
+        "mean_val": 5.3742553382652245,
+        "std_val": 24.4351780529774
+      },
+      "train_labels": {
+        "shape": [
+          6465,
+          1
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 6465,
+        "unique_labels": [
+          0.0,
+          5.0,
+          10.0
+        ],
+        "class_distribution": {
+          "0.0": 1199,
+          "5.0": 2723,
+          "10.0": 2543
+        },
+        "min_val": 0.0,
+        "max_val": 10.0
+      },
+      "test_blinks": {
+        "shape": [
+          2196,
+          30,
+          4
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 2196,
+        "sequence_length": 30,
+        "num_features": 4,
+        "min_val": -82.62636482586785,
+        "max_val": 226.23882691244876,
+        "mean_val": 4.043269904524598,
+        "std_val": 21.551377428338164
+      },
+      "test_labels": {
+        "shape": [
+          2196,
+          1
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 2196,
+        "unique_labels": [
+          0.0,
+          5.0,
+          10.0
+        ],
+        "class_distribution": {
+          "0.0": 449,
+          "5.0": 771,
+          "10.0": 976
+        },
+        "min_val": 0.0,
+        "max_val": 10.0
+      },
+      "sample_ratio": "Train: 6465, Test: 2196 (Total: 8661)"
+    },
+    "Fold4": {
+      "train_blinks": {
+        "shape": [
+          7186,
+          30,
+          4
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 7186,
+        "sequence_length": 30,
+        "num_features": 4,
+        "min_val": -108.51149920409902,
+        "max_val": 705.6404099328353,
+        "mean_val": 4.297165168564697,
+        "std_val": 23.0556805213417
+      },
+      "train_labels": {
+        "shape": [
+          7186,
+          1
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 7186,
+        "unique_labels": [
+          0.0,
+          5.0,
+          10.0
+        ],
+        "class_distribution": {
+          "0.0": 1436,
+          "5.0": 2904,
+          "10.0": 2846
+        },
+        "min_val": 0.0,
+        "max_val": 10.0
+      },
+      "test_blinks": {
+        "shape": [
+          1462,
+          30,
+          4
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 1462,
+        "sequence_length": 30,
+        "num_features": 4,
+        "min_val": -29.746762108318975,
+        "max_val": 213.61777335058224,
+        "mean_val": 8.719414819484038,
+        "std_val": 26.65832100936591
+      },
+      "test_labels": {
+        "shape": [
+          1462,
+          1
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 1462,
+        "unique_labels": [
+          0.0,
+          5.0,
+          10.0
+        ],
+        "class_distribution": {
+          "0.0": 211,
+          "5.0": 584,
+          "10.0": 667
+        },
+        "min_val": 0.0,
+        "max_val": 10.0
+      },
+      "sample_ratio": "Train: 7186, Test: 1462 (Total: 8648)"
+    },
+    "Fold5": {
+      "train_blinks": {
+        "shape": [
+          6957,
+          30,
+          4
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 6957,
+        "sequence_length": 30,
+        "num_features": 4,
+        "min_val": -108.51149920409902,
+        "max_val": 508.31217331733114,
+        "mean_val": 4.24203629534524,
+        "std_val": 20.613040602532614
+      },
+      "train_labels": {
+        "shape": [
+          6957,
+          1
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 6957,
+        "unique_labels": [
+          0.0,
+          5.0,
+          10.0
+        ],
+        "class_distribution": {
+          "0.0": 1352,
+          "5.0": 2678,
+          "10.0": 2927
+        },
+        "min_val": 0.0,
+        "max_val": 10.0
+      },
+      "test_blinks": {
+        "shape": [
+          1691,
+          30,
+          4
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 1691,
+        "sequence_length": 30,
+        "num_features": 4,
+        "min_val": -65.71101640635209,
+        "max_val": 705.6404099328353,
+        "mean_val": 8.347348823580568,
+        "std_val": 33.5521264827232
+      },
+      "test_labels": {
+        "shape": [
+          1691,
+          1
+        ],
+        "dtype": "float64",
+        "nan_count": 0,
+        "inf_count": 0,
+        "num_samples": 1691,
+        "unique_labels": [
+          0.0,
+          5.0,
+          10.0
+        ],
+        "class_distribution": {
+          "0.0": 295,
+          "5.0": 810,
+          "10.0": 586
+        },
+        "min_val": 0.0,
+        "max_val": 10.0
+      },
+      "sample_ratio": "Train: 6957, Test: 1691 (Total: 8648)"
+    }
+  }
+}

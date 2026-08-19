@@ -1,0 +1,44 @@
+# Configuration for UTA-RLDD Preprocessed Baseline Experiment (Phase 0)
+project:
+  name: "Driver Safety AI - UTA Baseline"
+  dataset: "UTA-RLDD Preprocessed (.npy)"
+  source: "rezaghoddoosian/Early-Drowsiness-Detection"
+
+classes:
+  raw_labels: [0.0, 5.0, 10.0]
+  num_classes: 3
+  mapping:
+    0.0: 0  # Alert
+    5.0: 1  # Low Vigilance / Semi-sleepy
+    10.0: 2 # Drowsy / Sleepy
+  names:
+    - "Alert (0.0)"
+    - "Low Vigilance (5.0)"
+    - "Drowsy (10.0)"
+
+features:
+  window_size: 30
+  num_features: 4
+  names:
+    - "Normalized Blink Frequency (Freq)"
+    - "Normalized Blink Amplitude (Amp)"
+    - "Normalized Blink Duration (Dur)"
+    - "Normalized Eye Opening Velocity (Vel)"
+
+model:
+  in_channels: 4
+  cnn_filters: 32
+  kernel_size: 3
+  lstm_hidden_size: 64
+  lstm_num_layers: 2
+  lstm_bidirectional: true
+  dropout: 0.3
+  num_classes: 3
+
+training:
+  primary_fold: 1 # Default test fold for baseline evaluation
+  batch_size: 64
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  epochs: 15
+  seed: 42

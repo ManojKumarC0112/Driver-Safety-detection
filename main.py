@@ -1,57 +1,32 @@
-import os
+"""
+Driver Safety AI - Main Application Entry Point.
+Launches real-time driver drowsiness and vigilance monitoring application.
+"""
 
-from config import (
-    DROWSINESS_VIDEO,
-    DROWSINESS_CSV,
-    DROWSINESS_REPORT,
-    DROWSINESS_OUTPUT_VIDEO,
-)
-from modules.drowsiness import DrowsinessDetector
-
+import sys
+import argparse
+from src.utils.paths import MODEL_PATH, SCALER_PATH
+from src.inference.realtime import run_realtime_application
 
 def main():
-
-    detector = DrowsinessDetector()
-
-    print("=" * 60)
-    print("SMART TRAFFIC AI - DRIVER DROWSINESS TEST")
-    print("=" * 60)
-
-    is_webcam = isinstance(DROWSINESS_VIDEO, int)
-
-    print(f"Video : {'webcam index ' + str(DROWSINESS_VIDEO) if is_webcam else DROWSINESS_VIDEO}")
-
-    if not is_webcam and not os.path.exists(DROWSINESS_VIDEO):
-        print("\nERROR: Video not found!")
-        print("Place your video here:")
-        print(DROWSINESS_VIDEO)
-        return
+    parser = argparse.ArgumentParser(description="Driver Safety AI - Real-Time Vigilance Detection System")
+    parser.add_argument("--config", type=str, default=None, help="Optional path to custom config.yaml")
+    parser.add_argument("--model", type=str, default=str(MODEL_PATH), help="Path to PyTorch model checkpoint")
+    parser.add_argument("--scaler", type=str, default=str(SCALER_PATH), help="Path to fitted StandardScaler")
+    args = parser.parse_args()
 
     try:
-
-        detector.process_video(DROWSINESS_VIDEO)
-
-        print("\n")
-        print("=" * 60)
-        print("TEST COMPLETED SUCCESSFULLY")
-        print("=" * 60)
-
-        print(f"Frames Processed : {detector.total_frames}")
-        print(f"Blink Count     : {detector.blink_count}")
-        print(f"Alerts          : {detector.alert_count}")
-        print(f"Last EAR        : {detector.ear:.3f}")
-
-        print("\nOutput Files")
-
-        print(f"CSV  : {DROWSINESS_CSV}")
-        print(f"PDF  : {DROWSINESS_REPORT}")
-        print(f"VIDEO: {DROWSINESS_OUTPUT_VIDEO}")
-
+        run_realtime_application(
+            config_path=args.config,
+            model_path=args.model,
+            scaler_path=args.scaler
+        )
+    except KeyboardInterrupt:
+        print("\n[Main] Driver Safety AI stopped by user.")
+        sys.exit(0)
     except Exception as e:
-
-        print("\nERROR")
-        print(e)
-
+        print(f"\n[Main] Application Error: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
