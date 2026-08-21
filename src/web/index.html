@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Safety AI — Fleet Cockpit Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for real-time telemetry -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Leaflet.js Interactive Map CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #e2e8f0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .strobe-alert {
+            animation: pulse-red 0.8s infinite alternate;
+        }
+
+        @keyframes pulse-red {
+            from {
+                box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+                border-color: rgba(239, 68, 68, 0.8);
+            }
+
+            to {
+                box-shadow: 0 0 35px rgba(239, 68, 68, 0.95);
+                border-color: rgba(239, 68, 68, 1);
+            }
+        }
+
+        /* Gauge SVG ring stroke styling */
+        .gauge-bg {
+            stroke: #1e293b;
+        }
+
+        .gauge-val {
+            stroke-dasharray: 440;
+            stroke-dashoffset: 440;
+            transition: stroke-dashoffset 0.5s ease-in-out, stroke 0.5s ease;
+        }
+
+        /* Leaflet Dark Popup Custom Styling */
+        .leaflet-popup-content-wrapper,
+        .leaflet-popup-tip {
+            background: #0f172a !important;
+            color: #f8fafc !important;
+            border: 1px solid rgba(245, 158, 11, 0.4) !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7) !important;
+            border-radius: 12px !important;
+        }
+
+        .leaflet-container {
+            font-family: inherit !important;
+        }
+
+        /* Full-Screen Emergency Red Flashing Strobe */
+        @keyframes fullscreen-emergency-strobe {
+
+            0%,
+            100% {
+                background-color: rgba(220, 38, 38, 0.75);
+                box-shadow: inset 0 0 120px rgba(255, 0, 0, 0.95);
+            }
+
+            50% {
+                background-color: rgba(15, 23, 42, 0.96);
+                box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.9);
+            }
+        }
+
+        .fullscreen-strobe-active {
+            animation: fullscreen-emergency-strobe 0.3s infinite alternate ease-in-out !important;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col pb-6">
+
+    <!-- Top Header Banner -->
+    <header
+        class="glass-panel sticky top-0 z-40 px-6 py-3.5 flex items-center justify-between border-b border-slate-800">
+        <div class="flex items-center gap-3">
+            <div class="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+                <i class="fa-solid fa-shield-halved text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-wide text-white flex items-center gap-2">
+                    DRIVER SAFETY AI
+                    <span
+                        class="text-xs px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium">ONLINE</span>
+                </h1>
+                <p class="text-xs text-slate-400">Real-Time Driver Drowsiness & Vigilance Monitoring System</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <!-- Audio Alarm Mute Toggle Button -->
+            <button id="toggle-audio-btn" onclick="toggleAudioAlarm()"
+                class="px-3.5 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-semibold hover:bg-rose-500/30 transition flex items-center gap-2">
+                <i id="audio-icon" class="fa-solid fa-volume-high"></i>
+                <span id="audio-status-text">Alarm Audio: ON</span>
+            </button>
+
+            <!-- Voice Language Selector -->
+            <select id="voice-language-select" onchange="setVoiceLanguage()"
+                class="px-3 py-1.5 rounded-lg bg-slate-900 text-slate-200 border border-slate-700 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/30">
+                <option value="english">English</option>
+                <option value="hindi">Hindi</option>
+                <option value="hinglish">Hinglish</option>
+            </select>
+
+            <!-- Session Summary Export -->
+            <button id="export-json-btn" onclick="downloadSessionSummary('json')"
+                class="px-3.5 py-1.5 rounded-lg bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-xs font-semibold hover:bg-cyan-500/25 transition flex items-center gap-2">
+                <i class="fa-solid fa-file-lines"></i>
+                <span>EXPORT JSON</span>
+            </button>
+            <button id="export-pdf-btn" onclick="downloadSessionSummary('pdf')"
+                class="px-3.5 py-1.5 rounded-lg bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 text-xs font-semibold hover:bg-indigo-500/25 transition flex items-center gap-2">
+                <i class="fa-solid fa-file-pdf"></i>
+                <span>EXPORT PDF</span>
+            </button>
+
+            <!-- Test Sound Button to unlock browser audio -->
+            <button id="test-sound-btn" onclick="testAudioSiren()"
+                class="px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition flex items-center gap-2 shadow-lg animate-pulse">
+                <i class="fa-solid fa-bell"></i>
+                <span>TEST ALARM SOUND</span>
+            </button>
+
+            <!-- GPS Location Badge -->
+            <div
+                class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300">
+                <i class="fa-solid fa-location-dot text-rose-500"></i>
+                <span id="gps-status">NH-44 Highway Corridor (Bengaluru)</span>
+            </div>
+            <!-- Power Nap Quick Trigger -->
+            <button id="toggle-dhaba-btn" onclick="toggleDhabaDrawer()"
+                class="px-3.5 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold hover:bg-amber-500/30 transition flex items-center gap-2">
+                <i class="fa-solid fa-utensils"></i> Nearby Dhabas & Rest Stops
+            </button>
+        </div>
+    </header>
+
+    <!-- Full-Screen Emergency Red Flashing Strobe Overlay Modal -->
+    <div id="emergency-strobe-overlay"
+        class="hidden fixed inset-0 z-50 flex flex-col items-center justify-center p-6 text-center backdrop-blur-sm pointer-events-auto">
+        <div
+            class="max-w-xl w-full p-8 rounded-3xl bg-slate-950/90 border-2 border-red-500 shadow-2xl flex flex-col items-center gap-6 stroke-red">
+            <div class="p-6 bg-red-600/30 text-red-500 rounded-full border-2 border-red-500/60 animate-bounce">
+                <i class="fa-solid fa-triangle-exclamation text-6xl"></i>
+            </div>
+            <div>
+                <h2 class="text-3xl font-black tracking-tight text-red-500 uppercase animate-pulse">CRITICAL DROWSINESS
+                    ALERT</h2>
+                <p class="text-base text-slate-200 mt-2 font-medium">Loud Audio Siren Activated & Full-Screen Visual
+                    Warning Active</p>
+                <p class="text-xs text-slate-400 mt-1">Sustained eye closure or critical risk detected. Pull over
+                    immediately!</p>
+            </div>
+            <div class="flex items-center gap-4 w-full mt-2">
+                <button onclick="dismissEmergencyAlarm()"
+                    class="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white font-black text-sm tracking-wider uppercase rounded-2xl transition border border-white/20 shadow-xl flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-bell-slash text-lg"></i> DISMISS ALARM & WAKE UP
+                </button>
+                <button onclick="toggleDhabaDrawer()"
+                    class="flex-1 py-4 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-sm tracking-wider uppercase rounded-2xl transition shadow-xl flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-utensils text-lg"></i> FIND REST STOP NOW
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column: Video Feed & Telemetry (7 cols) -->
+        <section class="lg:col-span-7 flex flex-col gap-5">
+            <!-- Camera Player Frame -->
+            <div id="video-card"
+                class="glass-panel rounded-2xl overflow-hidden relative shadow-2xl border border-slate-800">
+                <div
+                    class="absolute top-3 left-3 z-20 flex items-center gap-2 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs font-medium text-slate-200 border border-white/10">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                    <span>LIVE WEBCAM STREAM</span>
+                </div>
+                <div
+                    class="absolute top-3 right-3 z-20 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs font-mono text-slate-300 border border-white/10">
+                    <span id="fps-counter">FPS: --</span>
+                </div>
+
+                <!-- Video Element -->
+                <!-- Primary State Card -->
+                <div id="state-card" class="glass-panel p-5 rounded-2xl border border-emerald-500/30 bg-emerald-950/10">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold tracking-wider text-slate-400 uppercase">DRIVER VIGILANCE
+                            STATE</span>
+                        <span id="state-pill"
+                            class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">ALERT</span>
+                    </div>
+                    <div id="state-text" class="text-2xl font-black tracking-tight text-emerald-400 mt-2">
+                        STATE: ALERT
+                    </div>
+                    <p id="state-subtext" class="text-xs text-slate-400 mt-1">Driver showing normal alertness & eye
+                        stability.</p>
+                </div>
+
+                <!-- DVI Risk Gauge Card -->
+                <div
+                    class="glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col items-center justify-center relative">
+                    <h3 class="text-xs font-semibold tracking-wider text-slate-400 uppercase self-start mb-2">DRIVER
+                        VULNERABILITY INDEX (DVI)</h3>
+
+                    <div class="relative w-48 h-48 flex items-center justify-center">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 160 160">
+                            <circle class="gauge-bg" cx="80" cy="80" r="70" stroke-width="14" fill="transparent" />
+                            <circle id="gauge-circle" class="gauge-val" cx="80" cy="80" r="70" stroke-width="14"
+                                stroke="#10b981" fill="transparent" />
+                        </svg>
+                        <div class="absolute flex flex-col items-center justify-center text-center">
+                            <span id="dvi-score" class="text-3xl font-extrabold font-mono text-white">0.0%</span>
+                            <span id="dvi-level"
+                                class="text-xs font-bold text-emerald-400 uppercase tracking-widest mt-0.5">LOW
+                                RISK</span>
+                        </div>
+                    </div>
+
+                    <div class="w-full mt-4 pt-3 border-t border-slate-800 flex justify-between text-xs text-slate-400">
+                        <span>Intervention Level: <strong id="val-interv" class="text-white">L0</strong></span>
+                        <span>Response: <strong id="val-resp" class="text-white">NONE</strong></span>
+                    </div>
+                </div>
+
+                <!-- Live EAR Trend Chart -->
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex-1 min-h-[160px] flex flex-col">
+                    <h4 class="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-2">EAR TREND
+                        OSCILLOSCOPE
+                    </h4>
+                    <div class="flex-1 w-full relative">
+                        <canvas id="earChart"></canvas>
+                    </div>
+                </div>
+        </section>
+    </main>
+
+    <!-- Emergency Smart Dhaba & Rest Assistant Drawer (Sliding Overlay) -->
+    <div id="dhaba-drawer"
+        class="fixed inset-y-0 right-0 w-full sm:w-[420px] glass-panel bg-slate-950/95 border-l border-slate-800 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out p-6 flex flex-col">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-amber-500/20 text-amber-400 rounded-lg">
+                    <i class="fa-solid fa-utensils text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-white text-base">Smart Dhaba Assistant</h3>
+                    <p class="text-xs text-slate-400">Nearby Rest Stops & Highway Amenities</p>
+                </div>
+            </div>
+            <button onclick="toggleDhabaDrawer()"
+                class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- 15-Min Power Nap Timer Card -->
+        <div class="mt-4 p-4 rounded-xl bg-slate-900 border border-amber-500/30 flex items-center justify-between">
+            <div>
+                <div class="text-xs font-bold text-amber-400 uppercase">15-Min Power Nap Alarm</div>
+                <div id="nap-timer" class="text-2xl font-mono font-bold text-white mt-1">15:00</div>
+            </div>
+            <button id="nap-btn" onclick="toggleNapTimer()"
+                class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-lg transition flex items-center gap-2">
+                <i class="fa-solid fa-play"></i> START NAP
+            </button>
+        </div>
+
+        <div class="mt-4 p-4 rounded-xl bg-slate-900 border border-cyan-500/20">
+            <div class="text-xs font-bold text-cyan-300 uppercase">Recommendation Summary</div>
+            <p id="dhaba-summary" class="text-sm text-slate-300 mt-2 leading-6">Fetching the best nearby stops...</p>
+        </div>
+
+        <!-- Interactive Leaflet Map Container -->
+        <div class="mt-4 rounded-xl overflow-hidden border border-amber-500/30 relative h-48 z-10 shadow-2xl">
+            <div id="dhaba-map" class="w-full h-full bg-slate-900"></div>
+            <div
+                class="absolute bottom-2 left-2 z-[400] px-2.5 py-1 rounded-md bg-slate-950/80 backdrop-blur-md border border-white/10 text-[10px] text-amber-400 font-medium flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                <span>Live Rest Stop Radar</span>
+            </div>
+        </div>
+
+        <!-- Dhaba Cards Container -->
+        <div class="mt-5 flex-1 overflow-y-auto pr-1">
+            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">NEARBY HIGHWAY STOPS (WITHIN
+                5 KM)</h4>
+            <div id="dhaba-list" class="flex flex-col gap-3">
+                <!-- Dynamically populated via app.js -->
+                <div class="text-xs text-slate-500 text-center py-8">Fetching nearby Dhabas & Rest Stops...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App JavaScript -->
+    <script src="/src/web/app.js"></script>
+</body>
+
+</html>

@@ -328,7 +328,8 @@ def run_realtime_application(
                 state=decision_info.get("state", status_text),
                 intervention_level=decision_info.get("intervention_level", 0),
                 voice_event=decision_info.get("voice_event"),
-                response_status=decision_info.get("response_status", "NONE")
+                response_status=decision_info.get("response_status", "NONE"),
+                prev_state=decision_info.get("prev_state")
             )
 
             # 4. Render OpenCV HUD
